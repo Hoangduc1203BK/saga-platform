@@ -5,7 +5,6 @@ import * as express from 'express';
 import * as dotenv from 'dotenv';
 import { OrchestratorController } from './controller/orchestrator.controller';
 import { Orchestrator } from './orchestrator/orchestrator';
-import Container from 'typedi';
 import mongoose from 'mongoose';
 dotenv.config();
 mongoose.connect(process.env.DB_URL)
@@ -19,9 +18,9 @@ const Main = async () => {
     const port = process.env.PORT;
     const orchestrator =  new Orchestrator();
     const consumer = new ConsumerService();
-    consumer.addTopics(['ORCHESTRATOR-SERVICE-1']).then(async (result) => {
+    consumer.addTopics(['ORCHESTRATOR-SERVICE-2']).then(async (result) => {
         await consumer.consume(async (message) => {
-            await handleMessage(JSON.parse(message))
+            await handleMessage(JSON.parse(message.value));
         })
     })
 

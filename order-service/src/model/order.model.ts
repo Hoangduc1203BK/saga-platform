@@ -19,6 +19,10 @@ const orderSchema = new mongoose.Schema({
     amount: {
         type: Number,
         require: true
+    },
+    dtime: {
+        type: Number,
+        require: false,
     }
 }, { timestamps: true, versionKey: false })
 

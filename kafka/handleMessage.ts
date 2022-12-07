@@ -4,8 +4,12 @@ import { ProducerService } from "./producer/producer";
 const producer = Container.get(ProducerService);
 
 const messageTypeToTopicMessage = {
-    CREATE_ORDER_COMPLETED: ["ORCHESTRATOR-SERVICE-1"],
-    
+    CREATE_ORDER_COMPLETED: ["ORCHESTRATOR-SERVICE-2"],
+    CREATE_ORDER_FAIL: ["ORCHESTRATOR-SERVICE-2"],
+    CHECK_INVENTORY_COMPLETED:["ORCHESTRATOR-SERVICE-2"],
+    CHECK_INVENTORY_FAIL : ["ORCHESTRATOR-SERVICE-2"],
+    PAYMENT_FAIL: ["ORCHESTRATOR-SERVICE-2"],
+    PAYMENT_COMPLETED: ["ORCHESTRATOR-SERVICE-2"],
 }
 
 export const handleMessage =async (payload: any) => {

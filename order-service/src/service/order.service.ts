@@ -23,10 +23,9 @@ export class OrderService {
         return result;
     }
 
-    async updateOrder(id: string, state: string) {
+    async updateOrder(id: string, data: any) {
         const order = await this.getOrder(id);
-
-        const result = await Order.findByIdAndUpdate(order.id, {$set: {status: state}});
+        const result = await Order.findByIdAndUpdate(order.id, data, {new : true} );
 
         return result;
     }

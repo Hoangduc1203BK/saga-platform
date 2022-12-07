@@ -22,9 +22,9 @@ const Main = async () => {
     const port = process.env.PORT || 3010;
 
     const consumer = new ConsumerService();
-    consumer.addTopics(['ORDER-SERVICE-1']).then(async (result) => {
+    consumer.addTopics(['ORDER-SERVICE-3']).then(async (result) => {
         await consumer.consume(async (message) => {
-            await handleOrder(JSON.parse(message.value));
+            await handleOrder(message);
         })
     })
 

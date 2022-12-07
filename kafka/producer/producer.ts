@@ -28,17 +28,11 @@ export class ProducerService {
   }
 
   async produce(topic: any, messages: any, partition = 0) {
-    return this.producerReady.then(async (producer: any) => {
-      const payload = [{ topic, messages, partition }];
-      return new Promise((resolve, reject) => {
-        producer.send(payload, function (err, data) {
-          if (err) {
-            console.log("Error while producing data in this service");
-            reject(err);
-          }
-          resolve(data);
-        });
-      });
+    const payload = [{ topic, messages, partition }];
+    this.producer.send(payload, (err, result) => {
+      if(err) {
+        console.log("Error while producing data in this service");
+      }
     });
   }
 
