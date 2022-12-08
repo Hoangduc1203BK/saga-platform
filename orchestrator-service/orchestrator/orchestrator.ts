@@ -52,7 +52,6 @@ export class Orchestrator {
     const transactionId = payload.transactionId;
     const transaction = await Transaction.findById(transactionId);
     const indexService = transaction.services.indexOf(payload.service);
-
     let doc = {
       ...payload.data,
       transactionId,
@@ -60,12 +59,14 @@ export class Orchestrator {
 
     switch (payload.type) {
       case true:
-        if (indexService !== transaction.successFlow.length - 1) {
+        if (indexService < transaction.successFlow.length) {
           const nextService = transaction.services[indexService + 1];
           transaction.status = payload.message;
           await transaction.save();
-          doc.step = payload.step + 1;
-          await this.produceEvent(nextService, doc);
+          if (indexService < transaction.successFlow.length - 1) {
+            doc.step = payload.step + 1;
+            await this.produceEvent(nextService, doc);
+          }
         }
         break;
       case false:

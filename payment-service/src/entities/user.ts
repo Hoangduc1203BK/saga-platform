@@ -28,6 +28,12 @@ export class User {
     })
     accountBalance: number;
 
+    @Column({
+        type: 'varchar',
+        name: 'address',
+    })
+    address: string;
+
     @CreateDateColumn()
     create_At:Date;
 

@@ -14,7 +14,7 @@ export class OrderService {
     }
 
     async getOrder(id: string) {
-        const result = await Order.findOne({id});
+        const result = await Order.findOne({_id: id});
 
         if(!result) {
             throw new Error('Order not found');
@@ -25,7 +25,7 @@ export class OrderService {
 
     async updateOrder(id: string, data: any) {
         const order = await this.getOrder(id);
-        const result = await Order.findByIdAndUpdate(order.id, data, {new : true} );
+        const result = await Order.findByIdAndUpdate(order.id, data );
 
         return result;
     }

@@ -1,5 +1,4 @@
 export function HttpErrorHandler(err, req, res, next) {
-    console.log('aaa',err);
     if (err && typeof err.HttpStatusCode === "function") {
         const message = err.message;
         res.status(err.HttpStatusCode() || 500).json({

@@ -3,7 +3,7 @@ import Container from "typedi";
 import { ProductService } from "../service/product.service";
 export const checkInventory = async (service: string, payload: any) => {
   const productService = Container.get(ProductService);
-  const { productId, amount, transactionId } = payload;
+  const { productId, amount, transactionId, type } = payload;
   const product = await productService.getProduct(productId);
   let topic: any;
 
@@ -19,7 +19,7 @@ export const checkInventory = async (service: string, payload: any) => {
     },
   };
 
-  if (payload.type !== "REVERT") {
+  if (type !== "REVERT") {
     try {
       if (product.inventory > amount) {
         await productService.updateProduct(productId, {
@@ -35,6 +35,7 @@ export const checkInventory = async (service: string, payload: any) => {
             step: payload.step,
             data: {
               ...payload,
+              productName: product.name,
               price: product.price,
             },
           },
@@ -48,6 +49,7 @@ export const checkInventory = async (service: string, payload: any) => {
       await handleMessage(failData);
     }
   } else {
+    await productService.updateProduct(productId, { inventory: product.inventory + amount });
     await handleMessage(failData);
   }
 };
