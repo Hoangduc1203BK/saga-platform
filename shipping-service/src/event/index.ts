@@ -1,6 +1,8 @@
+import { MESSAGE_TYPE } from './../../../orchestrator-service/types/message';
 import { handleMessage } from './../../../kafka/handleMessage';
 import Container from "typedi";
 import { ShippingService } from "../service/shipping.service";
+import { SHIPPING_TOPIC } from '../types/topic';
 
 export const handleShipping = async (message: any) => {
     const messageData = JSON.parse(message.value);
@@ -19,12 +21,12 @@ export const handleShipping = async (message: any) => {
     try {
         await shippingService.createShipping(doc);
         const messageProduce = {
-            topic: 'SHIPPING_COMPLETED',
+            topic: SHIPPING_TOPIC.SHIPPING_COMPLETED,
             payload: {
                 service: message.topic,
                 transactionId,
-                message: 'SHIPPING-COMPLETED',
-                type: true,
+                message: SHIPPING_TOPIC.SHIPPING_COMPLETED,
+                type: MESSAGE_TYPE.SUCCESS,
                 step,
                 data: messageData,
             }
@@ -32,12 +34,12 @@ export const handleShipping = async (message: any) => {
         await handleMessage(messageProduce)
     } catch (error) {
         const messageProduce = {
-            topic: 'SHIPPING_FAIL',
+            topic: SHIPPING_TOPIC.SHIPPING_FAIL,
             payload: {
                 service: message.topic,
                 transactionId,
-                message: 'SHIPPING-FAIL',
-                type: false,
+                message:  SHIPPING_TOPIC.SHIPPING_FAIL,
+                type: MESSAGE_TYPE.FAIL,
                 step,
                 data: messageData,
             }

@@ -1,35 +1,45 @@
-import { UserService } from './../service/user.service';
-import { Router } from 'express';
-import { CreateUserDto } from './create-user.dto';
-import { parseReqMiddleware } from '../middleware/parse.middleware';
+import { UserService } from "./../service/user.service";
+import { Router } from "express";
+import { CreateUserDto } from "./create-user.dto";
+import { parseReqMiddleware } from "../middleware/parse.middleware";
 export function UserController(userService: UserService) {
-    const router = Router();
+  const router = Router();
 
-    router.post('/', async (req, res) => {
-        const payload = req.body as CreateUserDto;
-        const result = await userService.createUser(payload);
+  router.post("/", async (req, res, next) => {
+    try {
+      const payload = req.body as CreateUserDto;
+      const result = await userService.createUser(payload);
 
-        return res.json(result);
-    })
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    router.use(parseReqMiddleware)
+  router.use(parseReqMiddleware);
 
-    router.get('/:id', async (req, res) => {
-        const id = req["id"];
-        const result = await userService.getUser(id);
+  router.get("/:id", async (req, res, next) => {
+    try {
+      const id = req["id"];
+      const result = await userService.getUser(id);
 
-        res.json(result);
-    })
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    router.patch('/',  async (req,res) => {
-        const id = req["id"];
-        const payload = req.body;
-        const result = await userService.updateUser(id,payload);
+  router.patch("/", async (req, res, next) => {
+    try {
+      const id = req["id"];
+      const payload = req.body;
+      const result = await userService.updateUser(id, payload);
 
-        return res.json(result);
-    })
-    
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    return router;
-
+  return router;
 }

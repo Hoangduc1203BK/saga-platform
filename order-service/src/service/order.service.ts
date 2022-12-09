@@ -13,8 +13,8 @@ export class OrderService {
         return result;
     }
 
-    async getOrder(id: string) {
-        const result = await Order.findOne({_id: id});
+    async getOrder(transactionId: string) {
+        const result = await Order.findOne({transactionId: transactionId});
 
         if(!result) {
             throw new Error('Order not found');

@@ -1,29 +1,41 @@
-import { Router } from 'express';
-import { ProductService } from '../service/product.service';
+import { Router } from "express";
+import { ProductService } from "../service/product.service";
 
 export function ProductController(productService: ProductService) {
-    const router = Router();
+  const router = Router();
 
-    router.post('/', async (req, res) => {
-        const payload = req.body;
-        const result = await productService.createProduct(payload);
+  router.post("/", async (req, res, next) => {
+    try {
+      const payload = req.body;
+      const result = await productService.createProduct(payload);
 
-        return res.json(result);
-    })
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    router.get('/:id', async (req, res) => {
-        const id =req.params.id;
-        const result = await productService.getProduct(id);
+  router.get("/:id", async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const result = await productService.getProduct(id);
 
-        return res.json(result);
-    })
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
 
-    router.patch('/:id', async (req, res) => {
-        const id = req.params.id;
-        const result = await productService.updateProduct(id, req.body);
+  router.patch("/:id", async (req, res, next) => {
+    try {
+      const id = req.params.id;
+      const result = await productService.updateProduct(id, req.body);
 
-        return res.json(result);
-    })
+      res.json(result);
+    } catch (error) {
+        next(error);
+    }
+  });
 
-    return router;
+  return router;
 }

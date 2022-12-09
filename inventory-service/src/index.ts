@@ -7,6 +7,7 @@ import Container from 'typedi';
 import { ProductService } from './service/product.service';
 import { ProductController } from './controller/product.controller';
 import { handleEvent } from './event';
+import { HttpErrorHandler } from './exception/handle-error';
 dotenv.config();
 
 mongoose.connect(process.env.DB_URL)
@@ -31,6 +32,8 @@ const Main = async () => {
             await handleEvent(message);
         })
     });
+
+    app.use(HttpErrorHandler)
 
     app.listen(port, () => {
         console.log('App listen on port ' + port);

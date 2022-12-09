@@ -2,7 +2,7 @@ import { ProducerService } from "./../../kafka/producer/producer";
 import { Service, Container } from "typedi";
 import { OrchestratorDto } from "../dto/orchestrator.dto";
 import { Transaction } from "../model/orchestrator.model";
-import { MessageFromKafka } from "../types/message";
+import { MessageFromKafka, MESSAGE_TYPE } from "../types/message";
 
 @Service()
 export class Orchestrator {
@@ -58,7 +58,7 @@ export class Orchestrator {
     };
 
     switch (payload.type) {
-      case true:
+      case MESSAGE_TYPE.SUCCESS:
         if (indexService < transaction.successFlow.length) {
           const nextService = transaction.services[indexService + 1];
           transaction.status = payload.message;
@@ -69,7 +69,7 @@ export class Orchestrator {
           }
         }
         break;
-      case false:
+      case MESSAGE_TYPE.FAIL:
         if (indexService !== 0) {
           transaction.status = transaction.failFlow[payload.step];
           await transaction.save();

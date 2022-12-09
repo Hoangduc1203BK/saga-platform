@@ -1,6 +1,8 @@
+import { MESSAGE_TYPE } from './../../../orchestrator-service/types/message';
 import { handleMessage } from "./../../../kafka/handleMessage";
 import Container from "typedi";
 import { OrderService } from "../service/order.service";
+import { ORDER_TOPIC } from '../types/topic';
 export const handleOrder = async (message: any) => {
   const orderService = Container.get(OrderService);
   const data = JSON.parse(message.value);
@@ -12,12 +14,12 @@ export const handleOrder = async (message: any) => {
     };
     const result = await orderService.createOrder(doc);
     payload = {
-      topic: "CREATE_ORDER_COMPLETED",
+      topic: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
       payload: {
         service: message.topic,
         transactionId: data.id,
-        message: "CREATE-ORDER-COMPLETED",
-        type: true,
+        message: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
+        type: MESSAGE_TYPE.SUCCESS,
         step: data.step,
         data: {
           ...result["_doc"],
@@ -31,12 +33,12 @@ export const handleOrder = async (message: any) => {
         dtime: Date.now(),
       });
       payload = {
-        topic: "CREATE_ORDER_FAIL",
+        topic: ORDER_TOPIC.CREATE_ORDER_FAIL,
         payload: {
           service: message.topic,
           transactionId: data.transactionId,
-          message: "CREATE-ORDER-FAIL",
-          type: false,
+          message: ORDER_TOPIC.CREATE_ORDER_FAIL,
+          type: MESSAGE_TYPE.FAIL,
           step: data.step,
           data: result,
         },

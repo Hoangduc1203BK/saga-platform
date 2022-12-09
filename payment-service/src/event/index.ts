@@ -1,6 +1,8 @@
+import { MESSAGE_TYPE } from './../../../orchestrator-service/types/message';
 import { handleMessage } from './../../../kafka/handleMessage';
 import { Container } from 'typedi';
 import { UserService } from '../service/user.service';
+import { PAYMENT_TOPIC } from '../types/topic';
 
 export const handlePayment = async (message: any) => {
     const topic = message.topic;
@@ -11,12 +13,12 @@ export const handlePayment = async (message: any) => {
     const totalPrice = price * amount;
 
     let failData = {
-        topic: 'PAYMENT_FAIL',
+        topic: PAYMENT_TOPIC.PAYMENT_FAIL,
         payload: {
             service: topic,
             transactionId,
-            message: 'PAYMENT-FAIL',
-            type: false,
+            message: PAYMENT_TOPIC.PAYMENT_FAIL,
+            type: MESSAGE_TYPE.FAIL,
             step,
             data
         }
@@ -27,12 +29,12 @@ export const handlePayment = async (message: any) => {
             if(user.accountBalance > totalPrice) {
                 await userService.updateUser(userId, { accountBalance: user.accountBalance - totalPrice});
                 const messageProduce = {
-                    topic: 'PAYMENT_COMPLETED',
+                    topic: PAYMENT_TOPIC.PAYMENT_COMPLETED,
                     payload: {
                         service: topic,
                         transactionId,
-                        message: 'PAYMENT-COMPLETED',
-                        type: true,
+                        message: PAYMENT_TOPIC.PAYMENT_COMPLETED,
+                        type: MESSAGE_TYPE.SUCCESS,
                         step,
                         data: {
                             ...data,
