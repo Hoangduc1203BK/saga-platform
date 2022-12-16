@@ -1,28 +1,32 @@
 import * as mongoose from "mongoose";
 const shippingSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+    },
     name: {
         type: String,
-        required: true
+        required: false
     },
     phoneNumber: {
         type: String,
-        required: true,
+        required: false,
     },
     address: {
         type: String,
-        required: true,
+        required: false,
     },
     product: {
         type: String,
-        required: true,
+        required: false,
     },
     amount: {
         type: Number,
-        required: true,
+        required: false,
     },
     totalPrice: {
         type: Number,
-        required: true,
+        required: false,
     },
 }, { timestamps: true, versionKey: false })
 

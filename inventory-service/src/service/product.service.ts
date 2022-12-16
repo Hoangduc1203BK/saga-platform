@@ -14,10 +14,11 @@ export class ProductService {
 
   async getProduct(id: string) {
     try {
-      const product = await Product.findById(id);
+      const product = await Product.findById({_id: id});
 
       return product;
     } catch (error) {
+      console.log(error);
       throw new Error("Product not found");
     }
   }

@@ -4,10 +4,10 @@ import { OrderService } from "../service/order.service";
 export function OrderController(orderService: OrderService) {
     const router = Router();
 
-    router.get('/:transactionId', async (req, res, next) => {
+    router.get('/:id', async (req, res, next) => {
         try {
-            const transactionId = req.params.transactionId;
-            const result = await orderService.getOrder(transactionId);
+            const id = req.params.id;
+            const result = await orderService.getOrder(id);
 
             res.json(result);
         } catch (error) {

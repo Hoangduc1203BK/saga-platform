@@ -1,11 +1,12 @@
+import 'reflect-metadata';
 import { handleMessage } from './event/index';
 import { ConsumerService } from './../kafka/consumer/consumer';
-import 'reflect-metadata';
 import * as express from 'express';
 import * as dotenv from 'dotenv';
 import { OrchestratorController } from './controller/orchestrator.controller';
 import { Orchestrator } from './orchestrator/orchestrator';
 import mongoose from 'mongoose';
+import { HttpErrorHandler } from './exception/handle-error';
 dotenv.config();
 mongoose.connect(process.env.DB_URL)
 .then(() => {
@@ -25,6 +26,7 @@ const Main = async () => {
     })
 
     app.use('/start-transaction', OrchestratorController(orchestrator));
+    app.use(HttpErrorHandler);
     app.listen(port, () => {
         console.log('App listening on port ' + port);
     });

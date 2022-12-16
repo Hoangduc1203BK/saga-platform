@@ -1,5 +1,9 @@
 import * as mongoose from "mongoose";
 const TransactionSchema = new mongoose.Schema({
+    _id: {
+        type: String,
+        required: true,
+    },
     services: {
         type: Array<String>,
         require: true,

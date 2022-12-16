@@ -2,6 +2,8 @@ import { CreateOrderDto } from "../controller/order.dto";
 import { Service } from "typedi";
 import { Order } from "../model/order.model";
 import { v4 as uuidv4 } from 'uuid';
+import { RedisService } from "../../redis/redis";
+import { Container } from 'typedi';
 @Service()
 export class OrderService {
     constructor() {}
@@ -13,9 +15,8 @@ export class OrderService {
         return result;
     }
 
-    async getOrder(transactionId: string) {
-        const result = await Order.findOne({transactionId: transactionId});
-
+    async getOrder(id: string) {
+        const result = await Order.findOne({_id: id});
         if(!result) {
             throw new Error('Order not found');
         }

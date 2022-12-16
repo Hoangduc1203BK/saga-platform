@@ -3,29 +3,39 @@ import { Service, Container } from "typedi";
 import { OrchestratorDto } from "../dto/orchestrator.dto";
 import { Transaction } from "../model/orchestrator.model";
 import { MessageFromKafka, MESSAGE_TYPE } from "../types/message";
-
+import { v4 as uuidv4} from 'uuid';
+import { RedisService } from "../redis/redis";
+import { handleMessage } from '../../kafka/handleMessage';
+import { ORCHESTRATOR_TOPIC } from "../types/topic";
 @Service()
 export class Orchestrator {
   private producer: any;
+  private redisService: RedisService;
   constructor() {
     this.producer = new ProducerService();
     const orchestratorTopic = [
       { topic: "ORCHESTRATOR-SERVICE-2", partitions: 1, replicationFactor: 1 },
     ];
     this.producer.createTopic(orchestratorTopic);
+
+    this.redisService = Container.get(RedisService)
   }
 
   async createTransaction(payload: OrchestratorDto) {
     const { services, data } = payload;
     const createTransaction = {
+      _id:  uuidv4(),
       ...payload,
       status: "PENDING",
     };
-    const transaction = new Transaction(createTransaction);
 
-    const result = await transaction.save();
+    await this.redisService.setService('ORCHESTRATOR-SERVICE-2', createTransaction);
+
+    // const transaction = new Transaction(createTransaction);
+
+    // const result = await transaction.save();
     const doc = {
-      id: result._id,
+      id: createTransaction._id,
       ...data,
       step: 0,
     };
@@ -41,7 +51,18 @@ export class Orchestrator {
 
     await this.produceEvent(services[0], doc);
 
-    return result;
+    return true;
+  }
+
+
+  async getTransaction(id: string) {
+    const transaction = await this.redisService.getService(id);
+
+    if(!transaction._id) {
+      throw new Error('Transaction not found')
+    }
+
+    return transaction;
   }
 
   async produceEvent(topic: string, payload: any) {
@@ -50,7 +71,7 @@ export class Orchestrator {
 
   async consumeEvent(payload: MessageFromKafka) {
     const transactionId = payload.transactionId;
-    const transaction = await Transaction.findById(transactionId);
+    const transaction = await this.getTransaction(transactionId);
     const indexService = transaction.services.indexOf(payload.service);
     let doc = {
       ...payload.data,
@@ -62,17 +83,38 @@ export class Orchestrator {
         if (indexService < transaction.successFlow.length) {
           const nextService = transaction.services[indexService + 1];
           transaction.status = payload.message;
-          await transaction.save();
+
+          //set redis
+          await this.redisService.setService('ORCHESTRATOR-SERVICE-2', transaction);
+
           if (indexService < transaction.successFlow.length - 1) {
             doc.step = payload.step + 1;
             await this.produceEvent(nextService, doc);
+          }
+
+          if(indexService === transaction.services.length - 1) {
+            const cacheData = await this.redisService.getService(doc.transactionId);
+            const transaction = new Transaction(cacheData);
+            await transaction.save();
+
+            const payload = {
+              topic: ORCHESTRATOR_TOPIC.SUCCESS_TRANSACTION,
+              payload: {
+                ...doc
+              }
+            }
+
+            await handleMessage(payload);
           }
         }
         break;
       case MESSAGE_TYPE.FAIL:
         if (indexService !== 0) {
           transaction.status = transaction.failFlow[payload.step];
-          await transaction.save();
+
+          //set redis
+          await this.redisService.setService('ORCHESTRATOR-SERVICE-2', transaction);
+
           const nextService = transaction.services[indexService - 1];
           doc = {
             ...doc,

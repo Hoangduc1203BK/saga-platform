@@ -16,7 +16,7 @@ export class ShippingService {
     return shipping;
   }
 
-  async createShipping(data: CreateShippingDto) {
+  async createShipping(data: any) {
     const result = await Shipping.create(data);
 
     return result;
