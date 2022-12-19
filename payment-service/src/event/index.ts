@@ -36,11 +36,10 @@ export const handlePayment = async (message: any) => {
 
     await userService.updateUser(user.id, doc);
 
-  } else if (data.type === "REVERT") {
+  } else if (data.topic === "FAIL_TRANSACTION") {
     //redis
     await redisService.del(transactionId);
 
-    await handleMessage(failData);
   } else {
     try {
       if (user.accountBalance > totalPrice) {
@@ -68,13 +67,13 @@ export const handlePayment = async (message: any) => {
             },
           },
         };
-        await handleMessage(messageProduce);
+        await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
         
       } else {
-        await handleMessage(failData);
+        await handleMessage(failData, ['ORCHESTRATOR-SERVICE-2']);
       }
     } catch (error) {
-      await handleMessage(failData);
+      await handleMessage(failData, ['ORCHESTRATOR-SERVICE-2']);
     }
   }
 };

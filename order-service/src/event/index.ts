@@ -11,59 +11,82 @@ export const handleOrder = async (message: any) => {
   const redisService = Container.get(RedisService);
   const data = JSON.parse(message.value);
 
-  if (data.topic === "SUCCESS_TRANSACTION") {
-    const { userId, transactionId, productId, amount } = data.payload;
-    const doc = {
-      userId,
-      transactionId,
-      productId,
-      amount,
-    };
-    await orderService.createOrder(doc);
-
-  } else if (data.type === "REVERT") {
-    const orderId = data._id;
-    if (orderId) {
-      const order = await redisService.getService(orderId);
-      order.dtime = Date.now();
-      await redisService.setService("ORDER-SERVICE-3", order);
+  switch (data.topic) {
+    case "SUCCESS_TRANSACTION":
+      const { userId, transactionId, productId, amount } = data.payload;
+      const doc = {
+        userId,
+        transactionId,
+        productId,
+        amount,
+      };
+      await orderService.createOrder(doc);
+      break;
+    case "FAIL_TRANSACTION":
+      await redisService.del(data.payload._id);
+      break;
+    default:
+      const body = {
+        _id: uuidv4(),
+        ...data,
+        transactionId: data.id,
+      };
+  
+      delete body.id;
+  
+      await redisService.setService("ORDER-SERVICE-3", body);
+  
       const payload = {
-        topic: ORDER_TOPIC.CREATE_ORDER_FAIL,
+        topic: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
         payload: {
           service: message.topic,
-          transactionId: data.transactionId,
-          message: ORDER_TOPIC.CREATE_ORDER_FAIL,
-          type: MESSAGE_TYPE.FAIL,
+          transactionId: data.id,
+          message: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
+          type: MESSAGE_TYPE.SUCCESS,
           step: data.step,
-          data: order,
+          data: {
+            ...body,
+          },
         },
       };
-      await handleMessage(payload);
-    }
-  } else {
-    const doc = {
-      _id: uuidv4(),
-      ...data,
-      transactionId: data.id,
-    };
-
-    delete doc.id;
-
-    await redisService.setService("ORDER-SERVICE-3", doc);
-
-    const payload = {
-      topic: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
-      payload: {
-        service: message.topic,
-        transactionId: data.id,
-        message: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
-        type: MESSAGE_TYPE.SUCCESS,
-        step: data.step,
-        data: {
-          ...doc,
-        },
-      },
-    };
-    await handleMessage(payload);
+      await handleMessage(payload, ["ORCHESTRATOR-SERVICE-2"]);
   }
+
+  // if (data.topic === "SUCCESS_TRANSACTION") {
+  //   const { userId, transactionId, productId, amount } = data.payload;
+  //   const doc = {
+  //     userId,
+  //     transactionId,
+  //     productId,
+  //     amount,
+  //   };
+  //   await orderService.createOrder(doc);
+  // } else if (data.topic === "FAIL_TRANSACTION") {
+  //   await redisService.del(data.payload._id);
+  // } else {
+  //   const doc = {
+  //     _id: uuidv4(),
+  //     ...data,
+  //     transactionId: data.id,
+  //   };
+
+  //   delete doc.id;
+
+  //   await redisService.setService("ORDER-SERVICE-3", doc);
+
+  //   const payload = {
+  //     topic: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
+  //     payload: {
+  //       service: message.topic,
+  //       transactionId: data.id,
+  //       message: ORDER_TOPIC.CREATE_ORDER_COMPLETED,
+  //       type: MESSAGE_TYPE.SUCCESS,
+  //       step: data.step,
+  //       data: {
+  //         ...doc,
+  //       },
+  //     },
+  //   };
+  //   await handleMessage(payload, ["ORCHESTRATOR-SERVICE-2"]);
+  // }
 };

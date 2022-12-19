@@ -26,24 +26,16 @@ export const checkInventory = async (service: string, payload: any) => {
     const { transactionId } = payload.payload;
     const cacheData = await redisService.getService(transactionId);
     const product = await productService.getProduct(cacheData.productId);
-    await productService.updateProduct(cacheData.productId, {inventory: product.inventory - cacheData.amount} )
-
-  } else if (type === "REVERT") {
-    // const product = await productService.getProduct(productId);
-    // await productService.updateProduct(productId, { inventory: product.inventory + amount });
-
+    await productService.updateProduct(cacheData.productId, {
+      inventory: product.inventory - cacheData.amount,
+    });
+  } else if (payload.topic === "FAIL_TRANSACTION") {
     //redis
-    await redisService.del(transactionId);
-
-    await handleMessage(failData);
+    await redisService.del(payload.payload.transactionId);
   } else {
     try {
       const product = await productService.getProduct(productId);
       if (product.inventory >= amount) {
-        // await productService.updateProduct(productId, {
-        //   inventory: product.inventory - amount,
-        // });
-
         //redis
         const doc = {
           transactionId,
@@ -68,12 +60,12 @@ export const checkInventory = async (service: string, payload: any) => {
           },
         };
 
-        await handleMessage(topic);
+        await handleMessage(topic, ["ORCHESTRATOR-SERVICE-2"]);
       } else {
-        await handleMessage(failData);
+        await handleMessage(failData, ["ORCHESTRATOR-SERVICE-2"]);
       }
     } catch (error) {
-      await handleMessage(failData);
+      await handleMessage(failData, ["ORCHESTRATOR-SERVICE-2"]);
     }
   }
 };

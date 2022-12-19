@@ -104,7 +104,7 @@ export class Orchestrator {
               }
             }
 
-            await handleMessage(payload);
+            await handleMessage(payload, transaction.services);
           }
         }
         break;
@@ -115,12 +115,20 @@ export class Orchestrator {
           //set redis
           await this.redisService.setService('ORCHESTRATOR-SERVICE-2', transaction);
 
-          const nextService = transaction.services[indexService - 1];
-          doc = {
-            ...doc,
-            type: "REVERT",
-          };
-          await this.produceEvent(nextService, doc);
+          const message = {
+            topic: ORCHESTRATOR_TOPIC.FAIL_TRANSACTION,
+            payload: {
+              ...doc
+            }
+          }
+
+          await handleMessage(message, transaction.services);
+          // const nextService = transaction.services[indexService - 1];
+          // doc = {
+          //   ...doc,
+          //   type: "REVERT",
+          // };
+          // await this.produceEvent(nextService, doc);
         }
         break;
       default:

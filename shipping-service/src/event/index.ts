@@ -9,31 +9,41 @@ export const handleShipping = async (message: any) => {
   const messageData = JSON.parse(message.value);
   const shippingService = Container.get(ShippingService);
   const redisService = Container.get(RedisService);
-  
 
   if (messageData.topic === "SUCCESS_TRANSACTION") {
-    const { name, phoneNumber, address, price, amount, productName } = messageData.payload;
+    const { name, phoneNumber, address, price, amount, productName } =
+      messageData.payload;
     const doc = {
-        _id: uuidv4(),
-        name,
-        product: productName,
-        amount,
-        totalPrice: amount * price || 10000,
-        phoneNumber,
-        address,
-    }
+      _id: uuidv4(),
+      name,
+      product: productName,
+      amount,
+      totalPrice: amount * price || 10000,
+      phoneNumber,
+      address,
+    };
     await shippingService.createShipping(doc);
-
+  } else if (messageData.topic === "FAIL_TRANSACTION") {
+    await redisService.del(messageData.payload.transactionId);
   } else {
-    const { name, phoneNumber, address, price, amount, productName, transactionId, step } = messageData;
+    const {
+      name,
+      phoneNumber,
+      address,
+      price,
+      amount,
+      productName,
+      transactionId,
+      step,
+    } = messageData;
     const doc = {
-        transactionId,
-        name,
-        product: productName,
-        amount,
-        totalPrice: amount * price || 10000,
-        phoneNumber,
-        address,
+      transactionId,
+      name,
+      product: productName,
+      amount,
+      totalPrice: amount * price || 10000,
+      phoneNumber,
+      address,
     };
 
     try {
@@ -51,7 +61,7 @@ export const handleShipping = async (message: any) => {
         },
       };
 
-      await handleMessage(messageProduce);
+      await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
     } catch (error) {
       const messageProduce = {
         topic: SHIPPING_TOPIC.SHIPPING_FAIL,
@@ -65,7 +75,7 @@ export const handleShipping = async (message: any) => {
         },
       };
 
-      await handleMessage(messageProduce);
+      await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
     }
   }
 };
