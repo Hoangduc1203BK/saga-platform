@@ -8,6 +8,7 @@ import { OrderController } from './controller/order.controller';
 import { HttpErrorHandler } from './exception/handleError';
 import { ConsumerService } from './../../kafka/consumer/consumer';
 import { handleOrder } from './event';
+import { TOPIC } from './types/topic';
 dotenv.config();
 
 mongoose.connect(process.env.DB_URL)
@@ -22,7 +23,7 @@ const Main = async () => {
     const port = process.env.PORT || 3010;
 
     const consumer = new ConsumerService();
-    consumer.addTopics(['ORDER-SERVICE-3']).then(async (result) => {
+    consumer.addTopics([TOPIC.ORDER]).then(async (result) => {
         await consumer.consume(async (message) => {
             await handleOrder(message);
         })

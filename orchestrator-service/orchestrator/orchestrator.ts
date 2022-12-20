@@ -6,7 +6,7 @@ import { MessageFromKafka, MESSAGE_TYPE } from "../types/message";
 import { v4 as uuidv4} from 'uuid';
 import { RedisService } from "../redis/redis";
 import { handleMessage } from '../../kafka/handleMessage';
-import { ORCHESTRATOR_TOPIC } from "../types/topic";
+import { ORCHESTRATOR_TOPIC, TOPIC } from "../types/topic";
 @Service()
 export class Orchestrator {
   private producer: any;
@@ -14,7 +14,7 @@ export class Orchestrator {
   constructor() {
     this.producer = new ProducerService();
     const orchestratorTopic = [
-      { topic: "ORCHESTRATOR-SERVICE-2", partitions: 1, replicationFactor: 1 },
+      { topic: TOPIC, partitions: 1, replicationFactor: 1 },
     ];
     this.producer.createTopic(orchestratorTopic);
 
@@ -29,11 +29,8 @@ export class Orchestrator {
       status: "PENDING",
     };
 
-    await this.redisService.setService('ORCHESTRATOR-SERVICE-2', createTransaction);
+    await this.redisService.setService(TOPIC, createTransaction);
 
-    // const transaction = new Transaction(createTransaction);
-
-    // const result = await transaction.save();
     const doc = {
       id: createTransaction._id,
       ...data,
@@ -85,7 +82,7 @@ export class Orchestrator {
           transaction.status = payload.message;
 
           //set redis
-          await this.redisService.setService('ORCHESTRATOR-SERVICE-2', transaction);
+          await this.redisService.setService(TOPIC, transaction);
 
           if (indexService < transaction.successFlow.length - 1) {
             doc.step = payload.step + 1;
@@ -113,7 +110,7 @@ export class Orchestrator {
           transaction.status = transaction.failFlow[payload.step];
 
           //set redis
-          await this.redisService.setService('ORCHESTRATOR-SERVICE-2', transaction);
+          await this.redisService.setService(TOPIC, transaction);
 
           const message = {
             topic: ORCHESTRATOR_TOPIC.FAIL_TRANSACTION,
@@ -123,13 +120,26 @@ export class Orchestrator {
           }
 
           await handleMessage(message, transaction.services);
-          // const nextService = transaction.services[indexService - 1];
-          // doc = {
-          //   ...doc,
-          //   type: "REVERT",
-          // };
-          // await this.produceEvent(nextService, doc);
         }
+        break;
+      case MESSAGE_TYPE.REFRESH:
+        const { services, successFlow, failFlow, data } = transaction;
+        const createTransactionDto = {
+          services,
+          successFlow,
+          failFlow,
+          data
+        }
+        const messageToKafka = {
+          topic: ORCHESTRATOR_TOPIC.FAIL_TRANSACTION,
+          payload: {
+            ...doc
+          }
+        }
+
+        await handleMessage(messageToKafka, services);
+        await this.createTransaction(createTransactionDto);
+
         break;
       default:
         break;

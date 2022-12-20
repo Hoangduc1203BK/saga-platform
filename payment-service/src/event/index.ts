@@ -2,7 +2,7 @@ import { MESSAGE_TYPE } from "./../../../orchestrator-service/types/message";
 import { handleMessage } from "./../../../kafka/handleMessage";
 import { Container } from "typedi";
 import { UserService } from "../service/user.service";
-import { PAYMENT_TOPIC } from "../types/topic";
+import { PAYMENT_TOPIC, TOPIC } from "../types/topic";
 import { RedisService } from "../../redis/redis";
 
 export const handlePayment = async (message: any) => {
@@ -34,7 +34,21 @@ export const handlePayment = async (message: any) => {
       accountBalance: user.accountBalance - amount * price,
     };
 
-    await userService.updateUser(user.id, doc);
+    try {
+      await userService.updateUser(user.id, doc);
+    } catch (error) {
+      const result = await userService.updateUser(user.id, doc);
+      if(!result.id) {
+        const msgToKafka = {
+          topic: 'REFRESH_TRANSACTION',
+          payload: {
+            ...data,
+            type: 'REFRESH'
+          }
+        }
+        await handleMessage(msgToKafka, [TOPIC.ORCHESTRATOR]);
+      }
+    }
 
   } else if (data.topic === "FAIL_TRANSACTION") {
     //redis
@@ -67,13 +81,13 @@ export const handlePayment = async (message: any) => {
             },
           },
         };
-        await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
+        await handleMessage(messageProduce, [TOPIC.ORCHESTRATOR]);
         
       } else {
-        await handleMessage(failData, ['ORCHESTRATOR-SERVICE-2']);
+        await handleMessage(failData, [TOPIC.ORCHESTRATOR]);
       }
     } catch (error) {
-      await handleMessage(failData, ['ORCHESTRATOR-SERVICE-2']);
+      await handleMessage(failData, [TOPIC.ORCHESTRATOR]);
     }
   }
 };

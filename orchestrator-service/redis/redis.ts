@@ -38,7 +38,8 @@ export class RedisService {
   }
 
   async del(key: string) {
-    await this.client.del(key);
+    let delKey = `ORCHESTRATOR-SERVICE-2:${key}`
+    await this.client.del(delKey);
   }
 
   async setService(key: string, data: any) {

@@ -4,6 +4,7 @@ import * as dotenv from "dotenv";
 import * as mongoose from "mongoose";
 import { ConsumerService } from './../../kafka/consumer/consumer';
 import { handleShipping } from './event';
+import { TOPIC } from './types/topic';
 dotenv.config();
 
 mongoose.connect(process.env.DB_URL)
@@ -18,7 +19,7 @@ const Main = async () => {
     const port = process.env.PORT;
 
     const consumer = new ConsumerService();
-    consumer.addTopics(['SHIPPING-SERVICE']).then(async (result) => {
+    consumer.addTopics([TOPIC.SHIPPING]).then(async (result) => {
         await consumer.consume(async (message) => {
             await handleShipping(message);
         })

@@ -8,6 +8,7 @@ import { UserService } from './service/user.service';
 import { HttpErrorHandler } from './exception/handle_error';
 import { ConsumerService } from '../../kafka/consumer/consumer';
 import { handlePayment } from './event';
+import { TOPIC } from './types/topic';
 
 dotenv.config();
 const config = new Config();
@@ -24,7 +25,7 @@ const Main = async () => {
   const userService = Container.get(UserService);
   const consumer = new ConsumerService();
 
-  consumer.addTopics(["PAYMENT-SERVICE"]).then(async (result) => {
+  consumer.addTopics([TOPIC.PAYMENT]).then(async (result) => {
     await consumer.consume(async (message) => {
         await handlePayment(message);
     })

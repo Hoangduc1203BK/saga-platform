@@ -2,7 +2,7 @@ import { MESSAGE_TYPE } from "./../../../orchestrator-service/types/message";
 import { handleMessage } from "./../../../kafka/handleMessage";
 import Container from "typedi";
 import { ProductService } from "../service/product.service";
-import { INVENTORY_TOPIC } from "../types/topic";
+import { INVENTORY_TOPIC, TOPIC } from "../types/topic";
 import { RedisService } from "../../redis/redis";
 export const checkInventory = async (service: string, payload: any) => {
   const productService = Container.get(ProductService);
@@ -26,9 +26,26 @@ export const checkInventory = async (service: string, payload: any) => {
     const { transactionId } = payload.payload;
     const cacheData = await redisService.getService(transactionId);
     const product = await productService.getProduct(cacheData.productId);
-    await productService.updateProduct(cacheData.productId, {
-      inventory: product.inventory - cacheData.amount,
-    });
+    try {
+      await productService.updateProduct(cacheData.productId, {
+        inventory: product.inventory - cacheData.amount,
+      });
+    } catch (error) {
+      const result = await productService.updateProduct(cacheData.productId, {
+        inventory: product.inventory - cacheData.amount,
+      });
+
+      if (!result._id) {
+        const msgToKafka = {
+          topic: "REFRESH_TRANSACTION",
+          payload: {
+            ...payload,
+            type: "REFRESH",
+          },
+        };
+        await handleMessage(msgToKafka, [TOPIC.ORCHESTRATOR]);
+      }
+    }
   } else if (payload.topic === "FAIL_TRANSACTION") {
     //redis
     await redisService.del(payload.payload.transactionId);
@@ -60,12 +77,12 @@ export const checkInventory = async (service: string, payload: any) => {
           },
         };
 
-        await handleMessage(topic, ["ORCHESTRATOR-SERVICE-2"]);
+        await handleMessage(topic, [TOPIC.ORCHESTRATOR]);
       } else {
-        await handleMessage(failData, ["ORCHESTRATOR-SERVICE-2"]);
+        await handleMessage(failData, [TOPIC.ORCHESTRATOR]);
       }
     } catch (error) {
-      await handleMessage(failData, ["ORCHESTRATOR-SERVICE-2"]);
+      await handleMessage(failData, [TOPIC.ORCHESTRATOR]);
     }
   }
 };

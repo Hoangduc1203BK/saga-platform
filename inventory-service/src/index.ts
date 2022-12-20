@@ -8,6 +8,7 @@ import { ProductService } from './service/product.service';
 import { ProductController } from './controller/product.controller';
 import { handleEvent } from './event';
 import { HttpErrorHandler } from './exception/handle-error';
+import { TOPIC } from './types/topic';
 dotenv.config();
 
 mongoose.connect(process.env.DB_URL)
@@ -27,7 +28,7 @@ const Main = async () => {
 
 
     const consumer = new ConsumerService()
-    consumer.addTopics(['INVENTORY']).then(async (result) => {
+    consumer.addTopics([TOPIC.INVENTORY]).then(async (result) => {
         await consumer.consume(async (message) => {
             await handleEvent(message);
         })

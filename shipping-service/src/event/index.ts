@@ -2,7 +2,7 @@ import { MESSAGE_TYPE } from "./../../../orchestrator-service/types/message";
 import { handleMessage } from "./../../../kafka/handleMessage";
 import Container from "typedi";
 import { ShippingService } from "../service/shipping.service";
-import { SHIPPING_TOPIC } from "../types/topic";
+import { SHIPPING_TOPIC, TOPIC } from "../types/topic";
 import { RedisService } from "../redis/redis";
 import { v4 as uuidv4 } from "uuid";
 export const handleShipping = async (message: any) => {
@@ -22,7 +22,22 @@ export const handleShipping = async (message: any) => {
       phoneNumber,
       address,
     };
-    await shippingService.createShipping(doc);
+
+    try {
+      await shippingService.createShipping(doc);
+    } catch (error) {
+      const result = await shippingService.createShipping(doc);
+      if (!result._id) {
+        const msgToKafka = {
+          topic: "REFRESH_TRANSACTION",
+          payload: {
+            ...messageData.payload,
+            type: "REFRESH",
+          },
+        };
+        await handleMessage(msgToKafka, [TOPIC.ORCHESTRATOR]);
+      }
+    }
   } else if (messageData.topic === "FAIL_TRANSACTION") {
     await redisService.del(messageData.payload.transactionId);
   } else {
@@ -61,7 +76,7 @@ export const handleShipping = async (message: any) => {
         },
       };
 
-      await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
+      await handleMessage(messageProduce, [TOPIC.ORCHESTRATOR]);
     } catch (error) {
       const messageProduce = {
         topic: SHIPPING_TOPIC.SHIPPING_FAIL,
@@ -75,7 +90,7 @@ export const handleShipping = async (message: any) => {
         },
       };
 
-      await handleMessage(messageProduce, ["ORCHESTRATOR-SERVICE-2"]);
+      await handleMessage(messageProduce, [TOPIC.ORCHESTRATOR]);
     }
   }
 };
