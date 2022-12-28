@@ -61,6 +61,9 @@ export class ProductService {
         throw new Error("product not found");
       }
 
+      console.log(1);
+      console.log(2);
+
       await this.redisService.setService(TOPIC.INVENTORY, product);
       return product;
     }
