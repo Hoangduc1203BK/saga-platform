@@ -28,6 +28,11 @@ export class ProductService {
         await this.redisService.setService(TOPIC.INVENTORY, p);
       })
     );
+    console.log(1);
+    console.log(2);
+    console.log(3);
+    console.log(4);
+    console.log(5);
 
     return result;
   }
@@ -55,6 +60,9 @@ export class ProductService {
       if (!product) {
         throw new Error("product not found");
       }
+
+      console.log(1);
+      console.log(2);
 
       await this.redisService.setService(TOPIC.INVENTORY, product);
       return product;
