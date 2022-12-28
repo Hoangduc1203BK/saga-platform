@@ -29,6 +29,7 @@ export class ProductService {
       })
     );
     console.log(1);
+    console.log(2);
 
     return result;
   }
