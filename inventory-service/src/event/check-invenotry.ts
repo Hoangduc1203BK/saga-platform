@@ -23,19 +23,16 @@ export const checkInventory = async (service: string, payload: any) => {
   };
 
   if (payload.topic === "SUCCESS_TRANSACTION") {
-    const { transactionId } = payload.payload;
-    const cacheData = await redisService.getService(transactionId);
-    const product = await productService.getProduct(cacheData.productId);
+    const { productId } = payload.payload;
+    const cacheData = await redisService.getService(productId);
     try {
-      await productService.updateProduct(cacheData.productId, {
-        inventory: product.inventory - cacheData.amount,
-      });
+      await productService.updateProduct(cacheData.id, cacheData);
     } catch (error) {
       const result = await productService.updateProduct(cacheData.productId, {
-        inventory: product.inventory - cacheData.amount,
+        inventory: cacheData.amount,
       });
 
-      if (!result._id) {
+      if (!result) {
         const msgToKafka = {
           topic: "REFRESH_TRANSACTION",
           payload: {
@@ -51,15 +48,16 @@ export const checkInventory = async (service: string, payload: any) => {
     await redisService.del(payload.payload.transactionId);
   } else {
     try {
-      const product = await productService.getProduct(productId);
+      const product = await redisService.getService(productId);
+      console.log(product);
       if (product.inventory >= amount) {
         //redis
         const doc = {
-          transactionId,
-          productId: product._id,
-          amount: amount,
+          ...product,
+          inventory: product.inventory - amount,
         };
-        await redisService.setService("INVENTORY-SERVICE", doc);
+
+        await redisService.updateService(product.id, doc);
 
         topic = {
           topic: INVENTORY_TOPIC.CHECK_INVENTORY_COMPLETED,

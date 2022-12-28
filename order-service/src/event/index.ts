@@ -63,6 +63,7 @@ export const handleOrder = async (message: any) => {
           },
         },
       };
+      
       await handleMessage(payload, [TOPIC.ORCHESTRATOR]);
   }
 };

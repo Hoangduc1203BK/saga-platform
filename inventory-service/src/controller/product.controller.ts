@@ -4,6 +4,12 @@ import { ProductService } from "../service/product.service";
 export function ProductController(productService: ProductService) {
   const router = Router();
 
+  router.get('/', async (req, res) => {
+    const result = await productService.listProduct();
+
+    res.json(result);
+  })
+
   router.post("/", async (req, res, next) => {
     try {
       const payload = req.body;

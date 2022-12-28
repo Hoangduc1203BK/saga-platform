@@ -1,13 +1,12 @@
-import IORedis from "ioredis";
-import { Service } from 'typedi';
-
+import { default as Redis} from "ioredis";
+import { Service } from "typedi";
 
 const Services = (service: string, key: string) => `${service}:${key}`;
 @Service()
 export class RedisService {
   private client: any;
   constructor() {
-    this.client = new IORedis({
+    this.client = new Redis({
       host: process.env.REDIS_HOST,
       port: parseInt(process.env.REDIS_PORT),
     });
@@ -16,7 +15,7 @@ export class RedisService {
       console.log("Redis ready...");
       this.client.on("connect", () => {
         console.log("Redis connection established");
-      })
+      });
     });
 
     this.client.on("error", (error) => {
@@ -39,24 +38,28 @@ export class RedisService {
 
   async del(key: string) {
     const delKey = `PAYMENT-SERVICE:${key}`;
-    await this.client.del(delKey); 
+    await this.client.multi().del(delKey).exec();
   }
 
   async setService(key: string, data: any) {
-    for(let [k,v] of Object.entries(data)) {
-        await this.client.hset(Services(key,data.transactionId),k,JSON.stringify(v));
+    for (let [k, v] of Object.entries(data)) {
+      await this.client.multi().hset(
+        Services(key, data.transactionId),
+        k,
+        JSON.stringify(v)
+      ).exec();
     }
     return true;
   }
 
   async getService(key: string) {
-    const data = await this.client.hgetall(`PAYMMENT-SERVICE:${key}`);
+    const cacheData = await this.client.multi().hgetall(`PAYMMENT-SERVICE:${key}`).exec();
+    const data = cacheData[0][1];
 
     let result = {} as any;
-    for(let [k,v] of Object.entries(data)) {
+    for (let [k, v] of Object.entries(data)) {
       result[k] = JSON.parse(v as string);
     }
-
     return result;
   }
 }

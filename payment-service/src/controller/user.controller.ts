@@ -5,6 +5,15 @@ import { parseReqMiddleware } from "../middleware/parse.middleware";
 export function UserController(userService: UserService) {
   const router = Router();
 
+  router.get("/", async (req, res, next) => {
+    try {
+      const result = await userService.listUser();
+
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
   router.post("/", async (req, res, next) => {
     try {
       const payload = req.body as CreateUserDto;

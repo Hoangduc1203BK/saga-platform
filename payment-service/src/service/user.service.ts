@@ -11,6 +11,12 @@ export class UserService {
     this.userRepos = repository.getUserRepository();
   }
 
+  async listUser() {
+    const users= await (await this.userRepos).find();
+
+    return users;
+  }
+
   async getUser(id: number) {
     const user = await (await this.userRepos).findOne({ where: { id } });
 

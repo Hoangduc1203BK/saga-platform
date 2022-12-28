@@ -12,8 +12,10 @@ const Consumer = kafka.Consumer;
 export class ConsumerService {
     private consumer: any;
     private consumerReady: any;
+    private consumer2: any;
     constructor(topics?: any) {
         this.bindEventListeners(topics)
+        this.consumer2 = new Consumer(client, [], defaultOptions);
     }
 
     bindEventListeners(topics: any) {
