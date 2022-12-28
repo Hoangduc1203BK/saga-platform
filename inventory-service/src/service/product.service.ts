@@ -28,6 +28,7 @@ export class ProductService {
         await this.redisService.setService(TOPIC.INVENTORY, p);
       })
     );
+    console.log(1);
 
     return result;
   }
